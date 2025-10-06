@@ -1,6 +1,6 @@
+// runningState.java
 package org.example;
 
 public class runningState {
-    public static boolean running = true;
-
+    public static volatile boolean running = true; // volatile for thread visibility
 }

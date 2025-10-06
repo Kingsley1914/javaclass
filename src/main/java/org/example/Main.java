@@ -1,38 +1,26 @@
+// Main.java
 package org.example;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import static org.example.runningState.running;
+import java.nio.file.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class Main {
     public static void main(String[] args) {
         Path filePath = Paths.get("autosaved.txt");
-        ;
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        ArrayList<String> fileArray = new ArrayList<String>();
-        executor.submit(new shellTask(1, fileArray));
-        executor.submit(new AutoSaveTask(2, fileArray, filePath));
-        while(true){
-//            System.out.println(runningState.running);
-            if (runningState.running == false){
-                executor.shutdown();
-                try {
-                    if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                        System.out.println("Timeout reached! Forcing shutdown...");
-                        executor.shutdownNow(); // Interrupt running tasks
-                        break;
-                    }
-                } catch (InterruptedException e) {
-                    executor.shutdownNow();
-                }
-                break;
+        ArrayList<String> fileArray = new ArrayList<>();
+        ArrayList<String> safeList = new ArrayList<>(Collections.synchronizedList(fileArray));
 
-            }
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        executor.submit(new shellTask(1, safeList));
+        executor.submit(new AutoSaveTask(2, safeList, filePath));
+
+        while (runningState.running) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ignored) {}
         }
+
+        executor.shutdownNow();
+        System.out.println("Program ended cleanly.");
     }
 }
